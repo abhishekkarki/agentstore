@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/abhishek/agentstore/internal/storage"
+	"github.com/abhishek/agentstore/internal/storage/file"
 	"github.com/abhishek/agentstore/internal/storage/memory"
 )
 
@@ -95,9 +96,11 @@ func New(dataDir string, opts ...StoreOption) (Store, error) {
 	if cfg.inMemory || dataDir == "" {
 		backend = memory.New()
 	} else {
-		// TODO: Pebble backend — implemented in Phase 1, Week 1
-		// For now, fall back to in-memory with a warning
-		return nil, fmt.Errorf("persistent storage (Pebble) not yet implemented; use WithInMemory() for now")
+		fb, err := file.New(dataDir)
+		if err != nil {
+			return nil, fmt.Errorf("open file storage at %s: %w", dataDir, err)
+		}
+		backend = fb
 	}
 
 	return &store{
