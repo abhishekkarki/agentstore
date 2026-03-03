@@ -2,8 +2,8 @@
 
 Embeddable event store for AI agent state. Import it. Use it. Replay everything.
 
-[![Go Tests](https://github.com/abhishek/agentstore/actions/workflows/ci.yml/badge.svg)](https://github.com/abhishek/agentstore/actions)
-[![Go Reference](https://pkg.go.dev/badge/github.com/abhishek/agentstore.svg)](https://pkg.go.dev/github.com/abhishek/agentstore)
+[![Go Tests](https://github.com/abhishekkarki/agentstore/actions/workflows/ci.yml/badge.svg)](https://github.com/abhishekkarki/agentstore/actions)
+[![Go Reference](https://pkg.go.dev/badge/github.com/abhishekkarki/agentstore.svg)](https://pkg.go.dev/github.com/abhishekkarki/agentstore)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 ---
@@ -20,7 +20,7 @@ package main
 import (
     "context"
     "fmt"
-    "github.com/abhishek/agentstore"
+    "github.com/abhishekkarki/agentstore"
 )
 
 func main() {
@@ -104,10 +104,26 @@ In-memory backend on a single core (Intel Xeon):
 
 | Operation | Throughput | Latency |
 |-----------|-----------|---------|
-| Append | ~470k ops/sec | ~2.5μs |
-| GetState (with snapshot) | ~170k ops/sec | ~5.9μs |
-| GetState (1000 events, no snapshot) | ~500 ops/sec | ~2ms |
-| NewEvent | ~1M ops/sec | ~1μs |
+| Append | ~358k ops/sec | ~2.8μs |
+| GetState (with snapshot) | ~207k ops/sec | ~6.3μs |
+| GetState (1000 events, no snapshot) | ~594 ops/sec | ~1.9ms |
+| NewEvent | ~1M ops/sec | ~1.1μs |
+
+## Storage
+
+AgentStore supports two backends:
+
+**In-memory** — For testing, ephemeral agents, or when you don't need persistence:
+```go
+store, _ := agentstore.New("", agentstore.WithInMemory())
+```
+
+**File-based** — Durable, human-readable, crash-safe (fsync'd writes):
+```go
+store, _ := agentstore.New("./agent-data")
+```
+
+The file backend stores sessions as JSON, events as append-only JSONL, and snapshots as atomic JSON files. You can `cat` and `grep` the data directly.
 
 ## API
 
@@ -137,6 +153,30 @@ EventLLMResponse   // LLM output
 EventStateUpdated  // Explicit state mutation
 EventError         // Errors and failures
 EventCustom        // Your own event types
+```
+
+## CLI Tool
+
+AgentStore includes a CLI for inspecting and debugging sessions:
+
+```bash
+# Install
+go install github.com/abhishekkarki/agentstore/cmd/agentstore@latest
+
+# List all sessions
+agentstore sessions --data-dir ./agent-data
+
+# Replay a session timeline
+agentstore replay <session-id>
+
+# Filter by event type
+agentstore replay <session-id> --type=tool_called,tool_result
+
+# Export as JSON
+agentstore replay <session-id> --format=json
+
+# Session statistics
+agentstore stats <session-id>
 ```
 
 ## Roadmap
