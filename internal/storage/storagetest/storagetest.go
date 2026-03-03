@@ -88,7 +88,9 @@ func testSaveSessionDuplicate(t *testing.T, factory BackendFactory) {
 	ctx := context.Background()
 
 	s := makeSession("dup-1")
-	b.SaveSession(ctx, s)
+	if err := b.SaveSession(ctx, s); err != nil {
+		t.Fatalf("first SaveSession: %v", err)
+	}
 
 	err := b.SaveSession(ctx, s)
 	if err == nil {
@@ -115,7 +117,9 @@ func testListSessions(t *testing.T, factory BackendFactory) {
 		s := makeSession(fmt.Sprintf("list-%d", i))
 		// Stagger creation times
 		s.CreatedAt = time.Now().UTC().Add(time.Duration(i) * time.Millisecond)
-		b.SaveSession(ctx, s)
+		if err := b.SaveSession(ctx, s); err != nil {
+			t.Fatalf("SaveSession list-%d: %v", i, err)
+		}
 	}
 
 	sessions, err := b.ListSessions(ctx, 100, 0)
@@ -133,7 +137,9 @@ func testListSessionsPagination(t *testing.T, factory BackendFactory) {
 	ctx := context.Background()
 
 	for i := 0; i < 5; i++ {
-		b.SaveSession(ctx, makeSession(fmt.Sprintf("page-%d", i)))
+		if err := b.SaveSession(ctx, makeSession(fmt.Sprintf("page-%d", i))); err != nil {
+			t.Fatalf("SaveSession page-%d: %v", i, err)
+		}
 	}
 
 	sessions, _ := b.ListSessions(ctx, 2, 0)
@@ -153,7 +159,9 @@ func testUpdateSession(t *testing.T, factory BackendFactory) {
 	ctx := context.Background()
 
 	s := makeSession("upd-1")
-	b.SaveSession(ctx, s)
+	if err := b.SaveSession(ctx, s); err != nil {
+		t.Fatalf("SaveSession: %v", err)
+	}
 
 	s.EventCount = 42
 	s.Name = "updated"
@@ -175,7 +183,9 @@ func testAppendAndGetEvents(t *testing.T, factory BackendFactory) {
 	defer b.Close()
 	ctx := context.Background()
 
-	b.SaveSession(ctx, makeSession("ev-1"))
+	if err := b.SaveSession(ctx, makeSession("ev-1")); err != nil {
+		t.Fatalf("SaveSession: %v", err)
+	}
 
 	for i := uint64(1); i <= 5; i++ {
 		if err := b.AppendEvent(ctx, makeEvent("ev-1", i)); err != nil {
@@ -218,9 +228,13 @@ func testGetEventsFromSequence(t *testing.T, factory BackendFactory) {
 	defer b.Close()
 	ctx := context.Background()
 
-	b.SaveSession(ctx, makeSession("seq-1"))
+	if err := b.SaveSession(ctx, makeSession("seq-1")); err != nil {
+		t.Fatalf("SaveSession: %v", err)
+	}
 	for i := uint64(1); i <= 10; i++ {
-		b.AppendEvent(ctx, makeEvent("seq-1", i))
+		if err := b.AppendEvent(ctx, makeEvent("seq-1", i)); err != nil {
+			t.Fatalf("AppendEvent seq=%d: %v", i, err)
+		}
 	}
 
 	events, _ := b.GetEvents(ctx, "seq-1", 7)
@@ -237,7 +251,9 @@ func testGetEventsEmpty(t *testing.T, factory BackendFactory) {
 	defer b.Close()
 	ctx := context.Background()
 
-	b.SaveSession(ctx, makeSession("empty-1"))
+	if err := b.SaveSession(ctx, makeSession("empty-1")); err != nil {
+		t.Fatalf("SaveSession: %v", err)
+	}
 	events, err := b.GetEvents(ctx, "empty-1", 0)
 	if err != nil {
 		t.Fatalf("GetEvents on empty session: %v", err)
@@ -252,9 +268,13 @@ func testGetLatestSequence(t *testing.T, factory BackendFactory) {
 	defer b.Close()
 	ctx := context.Background()
 
-	b.SaveSession(ctx, makeSession("lseq-1"))
+	if err := b.SaveSession(ctx, makeSession("lseq-1")); err != nil {
+		t.Fatalf("SaveSession: %v", err)
+	}
 	for i := uint64(1); i <= 3; i++ {
-		b.AppendEvent(ctx, makeEvent("lseq-1", i))
+		if err := b.AppendEvent(ctx, makeEvent("lseq-1", i)); err != nil {
+			t.Fatalf("AppendEvent seq=%d: %v", i, err)
+		}
 	}
 
 	seq, err := b.GetLatestSequence(ctx, "lseq-1")
@@ -332,11 +352,15 @@ func testSnapshotOverwrite(t *testing.T, factory BackendFactory) {
 
 	state1, _ := json.Marshal(map[string]interface{}{"v": 1})
 	snap1 := &storage.SnapshotRecord{SessionID: "ow-1", Version: 5, State: state1, CreatedAt: time.Now().UTC(), EventCount: 5}
-	b.SaveSnapshot(ctx, snap1)
+	if err := b.SaveSnapshot(ctx, snap1); err != nil {
+		t.Fatalf("SaveSnapshot snap1: %v", err)
+	}
 
 	state2, _ := json.Marshal(map[string]interface{}{"v": 2})
 	snap2 := &storage.SnapshotRecord{SessionID: "ow-1", Version: 10, State: state2, CreatedAt: time.Now().UTC(), EventCount: 10}
-	b.SaveSnapshot(ctx, snap2)
+	if err := b.SaveSnapshot(ctx, snap2); err != nil {
+		t.Fatalf("SaveSnapshot snap2: %v", err)
+	}
 
 	got, _ := b.GetLatestSnapshot(ctx, "ow-1")
 	if got.Version != 10 {
