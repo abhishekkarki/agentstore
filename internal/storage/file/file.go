@@ -327,7 +327,7 @@ func (b *Backend) SaveSnapshot(_ context.Context, snapshot *storage.SnapshotReco
 	}
 
 	if err := os.Rename(tmpPath, path); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("rename snapshot: %w", err)
 	}
 

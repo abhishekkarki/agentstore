@@ -26,15 +26,21 @@ func TestPersistentStore(t *testing.T) {
 		sessionID = session.ID
 
 		e1, _ := agentstore.NewEvent(agentstore.EventUserMessage, map[string]string{"content": "hello"})
-		s.Append(ctx, sessionID, e1)
+		if err := s.Append(ctx, sessionID, e1); err != nil {
+			t.Fatal(err)
+		}
 
 		e2, _ := agentstore.NewEvent(agentstore.EventLLMResponse, map[string]string{"content": "hi there"})
 		e2.WithMetadata(agentstore.Metadata{Model: "gpt-4", TokensIn: 100, TokensOut: 50, CostUSD: 0.01})
-		s.Append(ctx, sessionID, e2)
+		if err := s.Append(ctx, sessionID, e2); err != nil {
+			t.Fatal(err)
+		}
 
 		e3, _ := agentstore.NewEvent(agentstore.EventToolCalled, map[string]string{"tool": "search"})
 		e3.WithMetadata(agentstore.Metadata{ToolName: "search"})
-		s.Append(ctx, sessionID, e3)
+		if err := s.Append(ctx, sessionID, e3); err != nil {
+			t.Fatal(err)
+		}
 
 		s.Close()
 	}

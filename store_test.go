@@ -101,9 +101,15 @@ func TestListSessions(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
-	s.CreateSession(ctx, agentstore.WithSessionName("first"))
-	s.CreateSession(ctx, agentstore.WithSessionName("second"))
-	s.CreateSession(ctx, agentstore.WithSessionName("third"))
+	if _, err := s.CreateSession(ctx, agentstore.WithSessionName("first")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.CreateSession(ctx, agentstore.WithSessionName("second")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.CreateSession(ctx, agentstore.WithSessionName("third")); err != nil {
+		t.Fatal(err)
+	}
 
 	sessions, err := s.ListSessions(ctx)
 	if err != nil {

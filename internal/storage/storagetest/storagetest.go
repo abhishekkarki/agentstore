@@ -59,7 +59,7 @@ func makeEvent(sessionID string, seq uint64) *storage.EventRecord {
 
 func testSaveAndGetSession(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 
 	s := makeSession("sess-1")
@@ -84,7 +84,7 @@ func testSaveAndGetSession(t *testing.T, factory BackendFactory) {
 
 func testSaveSessionDuplicate(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 
 	s := makeSession("dup-1")
@@ -100,7 +100,7 @@ func testSaveSessionDuplicate(t *testing.T, factory BackendFactory) {
 
 func testGetSessionNotFound(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 
 	_, err := b.GetSession(context.Background(), "nonexistent")
 	if err == nil {
@@ -110,7 +110,7 @@ func testGetSessionNotFound(t *testing.T, factory BackendFactory) {
 
 func testListSessions(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 
 	for i := 0; i < 5; i++ {
@@ -133,7 +133,7 @@ func testListSessions(t *testing.T, factory BackendFactory) {
 
 func testListSessionsPagination(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 
 	for i := 0; i < 5; i++ {
@@ -155,7 +155,7 @@ func testListSessionsPagination(t *testing.T, factory BackendFactory) {
 
 func testUpdateSession(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 
 	s := makeSession("upd-1")
@@ -180,7 +180,7 @@ func testUpdateSession(t *testing.T, factory BackendFactory) {
 
 func testAppendAndGetEvents(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 
 	if err := b.SaveSession(ctx, makeSession("ev-1")); err != nil {
@@ -215,7 +215,7 @@ func testAppendAndGetEvents(t *testing.T, factory BackendFactory) {
 
 func testAppendToMissingSession(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 
 	err := b.AppendEvent(context.Background(), makeEvent("missing", 1))
 	if err == nil {
@@ -225,7 +225,7 @@ func testAppendToMissingSession(t *testing.T, factory BackendFactory) {
 
 func testGetEventsFromSequence(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 
 	if err := b.SaveSession(ctx, makeSession("seq-1")); err != nil {
@@ -248,7 +248,7 @@ func testGetEventsFromSequence(t *testing.T, factory BackendFactory) {
 
 func testGetEventsEmpty(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 
 	if err := b.SaveSession(ctx, makeSession("empty-1")); err != nil {
@@ -265,7 +265,7 @@ func testGetEventsEmpty(t *testing.T, factory BackendFactory) {
 
 func testGetLatestSequence(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 
 	if err := b.SaveSession(ctx, makeSession("lseq-1")); err != nil {
@@ -288,7 +288,7 @@ func testGetLatestSequence(t *testing.T, factory BackendFactory) {
 
 func testGetLatestSequenceEmpty(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 
 	seq, err := b.GetLatestSequence(context.Background(), "nonexistent")
 	if err != nil {
@@ -301,7 +301,7 @@ func testGetLatestSequenceEmpty(t *testing.T, factory BackendFactory) {
 
 func testSaveAndGetSnapshot(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 
 	state, _ := json.Marshal(map[string]interface{}{"tokens": 500})
@@ -334,7 +334,7 @@ func testSaveAndGetSnapshot(t *testing.T, factory BackendFactory) {
 
 func testGetSnapshotEmpty(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 
 	snap, err := b.GetLatestSnapshot(context.Background(), "no-snap")
 	if err != nil {
@@ -347,7 +347,7 @@ func testGetSnapshotEmpty(t *testing.T, factory BackendFactory) {
 
 func testSnapshotOverwrite(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 
 	state1, _ := json.Marshal(map[string]interface{}{"v": 1})
@@ -370,7 +370,9 @@ func testSnapshotOverwrite(t *testing.T, factory BackendFactory) {
 
 func testClosePreventsFurtherOps(t *testing.T, factory BackendFactory) {
 	b := factory(t)
-	b.Close()
+	if err := b.Close(); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
 
 	_, err := b.GetSession(context.Background(), "any")
 	if err == nil {

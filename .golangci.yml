@@ -1,0 +1,16 @@
+version: "2"
+
+linters:
+  settings:
+    errcheck:
+      exclude-functions:
+        # defer f.Close() on read-opened files is idiomatic Go;
+        # close errors on read-only descriptors are not actionable.
+        - (*os.File).Close
+  exclusions:
+    rules:
+      # Test setup code frequently discards errors intentionally;
+      # failures surface as assertion failures downstream.
+      - path: '(.+)_test\.go'
+        linters:
+          - errcheck
