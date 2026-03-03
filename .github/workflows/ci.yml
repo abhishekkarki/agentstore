@@ -20,6 +20,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
+          cache: true
 
       - name: Verify dependencies
         run: go mod verify
@@ -35,15 +36,12 @@ jobs:
 
       - name: Coverage check
         run: |
-          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | tr -d '%')
+          COVERAGE=$(go tool cover -func=coverage.out | awk '/^total:/ {print substr($3, 1, length($3)-1)}')
           echo "Total coverage: ${COVERAGE}%"
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "::error::Coverage ${COVERAGE}% is below 80% threshold"
-            exit 1
-          fi
+          awk -v cov="$COVERAGE" 'BEGIN { if (cov+0 < 80) exit 1 }'
 
-      - name: Benchmark
-        run: go test -bench=. -benchmem -benchtime=1s -run=^$ | tee benchmark.txt
+      - name: Benchmark (quick check)
+        run: go test -bench=. -benchmem -benchtime=100ms -run=^$
 
   lint:
     runs-on: ubuntu-latest
@@ -54,6 +52,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
+          cache: true
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
