@@ -14,12 +14,14 @@ import (
 )
 
 func main() {
-	// Create an in-memory store (use a path for persistent storage)
-	store, err := agentstore.New("", agentstore.WithInMemory())
+	// Create a persistent store (data survives restarts)
+	dataDir := "./agent-data"
+	store, err := agentstore.New(dataDir)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer store.Close()
+	// For in-memory (testing): agentstore.New("", agentstore.WithInMemory())
 
 	ctx := context.Background()
 
@@ -101,4 +103,8 @@ func main() {
 	fmt.Printf("  Cost:       $%.3f\n", state.Tokens.CostUSD)
 	fmt.Printf("  Tool calls: %d\n", state.ToolCalls)
 	fmt.Printf("  Errors:     %d\n", state.Errors)
+
+	// ── Demonstrate persistence ─────────────────────────────────────────
+	fmt.Printf("\nData persisted to %s/\n", dataDir)
+	fmt.Println("Run 'agentstore sessions' or 'agentstore replay <id>' to inspect.")
 }
