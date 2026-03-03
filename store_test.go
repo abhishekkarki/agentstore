@@ -642,15 +642,11 @@ func TestSessionUpdatedAfterAppend(t *testing.T) {
 	ctx := context.Background()
 
 	session, _ := s.CreateSession(ctx)
-	originalUpdatedAt := session.UpdatedAt
 
 	event, _ := agentstore.NewEvent(agentstore.EventUserMessage, "hello")
 	s.Append(ctx, session.ID, event)
 
 	updated, _ := s.GetSession(ctx, session.ID)
-	if !updated.UpdatedAt.After(originalUpdatedAt) || updated.UpdatedAt.Equal(originalUpdatedAt) {
-		// They could be equal if the test runs fast enough, so just check EventCount
-	}
 	if updated.EventCount != 1 {
 		t.Fatalf("expected event count 1, got %d", updated.EventCount)
 	}

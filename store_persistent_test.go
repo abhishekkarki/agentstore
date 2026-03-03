@@ -160,9 +160,15 @@ func TestPersistentStoreListSessions(t *testing.T) {
 
 	{
 		s, _ := agentstore.New(dir)
-		s.CreateSession(ctx, agentstore.WithSessionName("alpha"))
-		s.CreateSession(ctx, agentstore.WithSessionName("beta"))
-		s.CreateSession(ctx, agentstore.WithSessionName("gamma"))
+		if _, err := s.CreateSession(ctx, agentstore.WithSessionName("alpha")); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.CreateSession(ctx, agentstore.WithSessionName("beta")); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.CreateSession(ctx, agentstore.WithSessionName("gamma")); err != nil {
+			t.Fatal(err)
+		}
 		s.Close()
 	}
 
